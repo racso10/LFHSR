@@ -27,7 +27,7 @@ python test.py --datasets Datasets_S --view_n_ori 9 --scale 8 --view_n 9 --dispa
 ```
 
 If you want to test with your own datasets, you should put the LF images into the folder `./LFHSR_Datasets/Test/` and write the name of the LF images into the `./data_list/Datasets_yourselves.txt`.
-Please note that the datasets should be prepared as the **micro-lens** image and the **PNG** format file with $9 \times 9$ angular resolution.
+Please note that the datasets should be prepared as the **micro-lens** image and the **PNG** format file.
 
 Use `python test.py -h` to get more helps.
 
