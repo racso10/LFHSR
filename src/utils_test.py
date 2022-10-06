@@ -8,55 +8,6 @@ import torch.nn.functional as F
 import math
 
 
-def weight_L1Loss(X, Y, weight):
-    weight_error = torch.abs(X - Y) * weight
-    loss = torch.sum(weight_error) / torch.numel(weight_error)
-    return loss
-
-
-def data_prepare_new(dir_LF, view_n_ori, view_n_new, scale, disparity_list):
-    assert view_n_new % 2 == 1
-    D = len(disparity_list)
-    gt_y = image_prepare_npy(dir_LF, view_n_ori, view_n_new)
-    U, V, X, Y = list(gt_y.shape)
-    lr_X = X // scale
-    lr_Y = Y // scale
-    X = lr_X * scale
-    Y = lr_Y * scale
-    lr_y = np.zeros((view_n_new, view_n_new, lr_X, lr_X), dtype=np.float32)
-    gt_y = gt_y[..., :X, :Y]
-
-    for i in range(view_n_new):
-        for j in range(view_n_new):
-            img = Image.fromarray(gt_y[i, j] / 255.0)
-            img_tmp = img.resize((lr_X, lr_Y), Image.BICUBIC)
-            lr_y[i, j, ...] = img_tmp
-    lr_y = torch.from_numpy(lr_y.copy()).cuda().reshape(1, 1, -1, lr_X, lr_Y)
-    lr_y_sheared = warp_all(lr_y, disparity_list / scale, view_n_new, view_position=[view_n_new // 2, view_n_new // 2])
-    lr_y_sheared = lr_y_sheared.reshape(D, U, V, lr_X, lr_Y).cpu().numpy()
-    gt_y /= 255.0
-
-    return lr_y_sheared, gt_y, None
-
-
-def angular_resolution_changes(image, view_num_ori, view_num_new):
-    n_view = (view_num_ori + 1 - view_num_new) // 2
-    return image[n_view:n_view + view_num_new, n_view:n_view + view_num_new, :, :]
-
-
-def image_prepare_npy(image_path, view_n_ori, view_n_new):
-    # gt_image = np.load(image_path).astype(np.float32)
-    gt_image = np.load(image_path)
-    gt_image = gt_image.astype(np.float32)
-    # change the angular resolution of LF images for different input
-    if view_n_new < view_n_ori:
-        gt_image_input = angular_resolution_changes(gt_image, view_n_ori, view_n_new)
-    else:
-        gt_image_input = gt_image
-
-    return gt_image_input
-
-
 def get_parameter_number(net):
     print(net)
     parameter_list = [p.numel() for p in net.parameters()]

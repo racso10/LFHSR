@@ -9,7 +9,7 @@ import sys
 from skimage.metrics import peak_signal_noise_ratio, structural_similarity
 from argparse import ArgumentParser, ArgumentTypeError
 
-import utils
+import utils_test
 from model import LFHSR_mask
 
 
@@ -39,7 +39,7 @@ def opts_parser():
     usage = "LF-Hybrid-SR"
     parser = ArgumentParser(description=usage)
     parser.add_argument(
-        '-i', '--image_path', type=str, default=None, dest='image_path',
+        '-d', '--datasets', type=str, default=None, dest='datasets',
         help='Loading 4D LF images (micro-lens and PNG format files) from this path: (default: %(default)s)')
     parser.add_argument(
         '-o', '--view_n_ori', type=int, default=14, dest='view_n_ori',
@@ -69,7 +69,7 @@ def opts_parser():
     return parser
 
 
-def test_main(image_path, scale, view_n, view_n_ori, disparity_range, disparity_count, gpu_no=0, is_save=False):
+def test_main(datasets, scale, view_n, view_n_ori, disparity_range, disparity_count, gpu_no=0, is_save=False):
     os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu_no)
     torch.backends.cudnn.benchmark = True
 
@@ -91,7 +91,7 @@ def test_main(image_path, scale, view_n, view_n_ori, disparity_range, disparity_
                        u_net_num_layers=u_net_num_layers, u_net_channel=u_net_channel, up_num_layers=up_num_layers,
                        up_channel=channels)
 
-    utils.get_parameter_number(model)
+    utils_test.get_parameter_number(model)
 
     model.cuda()
     model.eval()
@@ -100,13 +100,12 @@ def test_main(image_path, scale, view_n, view_n_ori, disparity_range, disparity_
     print('=' * 40)
     print('load model...')
 
-    state_dict = torch.load(f'../pretrain_model/s{scale}n{view_n}.pkl')
+    state_dict = torch.load(f'../pretrain_model/LFHSR_{scale}_{view_n}.pkl')
     model.load_state_dict(state_dict)
     print('done')
 
     print('=' * 40)
     print('create save directory...')
-    dataset_name = image_path.split('/')[-2]
     save_path = f'../result/s{scale}n{view_n}/'
     if not os.path.exists(save_path):
         os.makedirs(save_path)
@@ -128,15 +127,20 @@ def test_main(image_path, scale, view_n, view_n_ori, disparity_range, disparity_
     time_list = []
 
     cut_margin = 16
-    image_list = os.listdir(image_path)
+
+    image_list = []
+    for line in open(f'../data_list/{datasets}.txt'):
+        image_list.append(line.strip())
     image_list.sort()
 
     for index, image_name in enumerate(image_list):
         print('-' * 100)
         print('[{}/{}]'.format(index + 1, len(image_list)), image_name)
 
-        lr_y_sheared, gt_y, lr_ycbcr, gt_ycbcr, time_strat = utils.data_prepare(image_path + image_name, view_n_ori,
-                                                                                view_n, scale, disparity_list)
+        lr_y_sheared, gt_y, lr_ycbcr, gt_ycbcr, time_strat = utils_test.data_prepare(
+            f'../LFHSR_Datasets/Test/{image_name}.png',
+            view_n_ori, view_n, scale,
+            disparity_list)
 
         hr_img = gt_y[view_n // 2, view_n // 2]
         hr_y = predict_y(lr_y_sheared, hr_img, model, view_n, scale, disparity_list)
@@ -179,7 +183,7 @@ def test_main(image_path, scale, view_n, view_n_ori, disparity_range, disparity_
             print('')
 
         if is_save:
-            result_image_path = save_path + image_name[0:-4] + '/'
+            result_image_path = save_path + image_name + '/'
             if not os.path.exists(result_image_path):
                 os.makedirs(result_image_path)
 
@@ -209,7 +213,7 @@ def test_main(image_path, scale, view_n, view_n_ori, disparity_range, disparity_
 
     result = pd.DataFrame(xls_list, columns=['image', 'psnr', 'ssim', 'time'])
     result.to_csv(
-        save_path + 'result_s{}n{}_{}_{}_{}.csv'.format(scale, view_n, dataset_name, disparity_range, int(time.time())))
+        save_path + 'result_s{}n{}_{}_{}_{}.csv'.format(scale, view_n, datasets, disparity_range, int(time.time())))
 
     print('-' * 100)
     print('Average: PSNR: {:.4f}, SSIM: {:.4f}, TIME: {:.4f}'.format(np.mean(psnr_list), np.mean(ssim_list),
@@ -225,9 +229,9 @@ def predict_y(lr_y_shear, hr_img, model, view_n, scale, disparity_list):
 
         lr_y_shear = lr_y_shear.reshape(1, -1, view_n * view_n, lr_y_shear.shape[3], lr_y_shear.shape[4])
 
-        if lr_y_shear.shape[3] * scale > 512:
-            hr_y = utils.overlap_crop_forward(lr_y_shear, hr_img, scale, disparity_list, model, max_length=200,
-                                              shave=10, mod=8)
+        if lr_y_shear.shape[3] * scale > 300:
+            hr_y = utils_test.overlap_crop_forward(lr_y_shear, hr_img, scale, disparity_list, model, max_length=200,
+                                                   shave=10, mod=8)
 
         else:
             lr_LF = lr_y_shear[:, len(disparity_list) // 2].reshape(1, view_n, view_n, lr_y_shear.shape[3],
@@ -242,7 +246,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     test_main(
-        image_path=args.image_path,
+        datasets=args.datasets,
         scale=args.scale,
         view_n=args.view_n,
         view_n_ori=args.view_n_ori,
