@@ -38,7 +38,7 @@ Use `python test.py -h` to get more helps.
 We provide the pre-trained model for the real-world data ($\times 2$ task with $3\times 3$ angular resolution).
 
 ```bash
-python test_for_real_world.py --image_path ../../Dataset/real_LF/ --scale 2 --view_n 3 --disparity_range 20 --disparity_count 32 --gpu_no 0
+python test_for_real_world.py --image_path YOUR/OWN/REAL/WORLD/DATASETS/PATH/ --scale 2 --view_n 3 --disparity_range 20 --disparity_count 32 --gpu_no 0
 ```
 
 You can modify the disparity range and count for your own datasets.
