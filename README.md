@@ -17,6 +17,8 @@
 
 ## Testing with the pre-trained model
 
+### Synthetic Data
+
 We provide the pre-trained model of $\times 4$ and $\times 8$ task.
 
 Please first download our dataset via [BaiDu Drive](https://pan.baidu.com/s/1jZud3Jd3NodWc-zMrYNsBQ) (key: 2w7c), and place the folder `./LFHSR_Datasets/`.
@@ -31,6 +33,30 @@ Please note that the datasets should be prepared as the **micro-lens** image and
 
 Use `python test.py -h` to get more helps.
 
+### Real-world Data
+
+We provide the pre-trained model for the real-world data ($\times 2$ task with $3\times 3$ angular resolution).
+
+```bash
+python test_for_real_world.py --image_path ../../Dataset/real_LF/ --scale 2 --view_n 3 --disparity_range 20 --disparity_count 32 --gpu_no 0
+```
+
+You can modify the disparity range and count for your own datasets.
+
+Use `python test_for_real_world.py -h` to get more helps.
+
 ## Training
 
-The training code is coming soon.
+For $\times 4$ task:
+
+```bash
+python train.py -S 4 -N 9 -dmin 4 -dmax 4 -dg 0.25 -l1 6 -l2 6 -l3 6 -l4 3 -b 4 -crop 32 -lr 0.001 -step 1600 -g 0
+```
+
+For $\times 8$ task:
+
+```bash
+python train.py -S 8 -N 9 -dmin 4 -dmax 4 -dg 0.25 -l1 6 -l2 6 -l3 4 -l4 4 -b 2 -crop 24 -lr 0.0005 -step 1600 -g 0
+```
+
+Use `python train.py -h` to get more helps.

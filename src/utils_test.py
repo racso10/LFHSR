@@ -143,3 +143,36 @@ def data_prepare(dir_LF, view_n_ori, view_n_new, scale, disparity_list):
     lr_y_sheared = lr_y_sheared.reshape(D, U, V, lr_X, lr_Y).cpu().numpy()
 
     return lr_y_sheared / 255.0, gt_y / 255.0, lr_ycbcr, gt_ycbcr, time_strat
+
+
+def data_prepare_real_LF(dir_LF, view_n_new, scale, disparity_list):
+    assert view_n_new % 2 == 1
+    D = len(disparity_list)
+
+    LF_image = cv2.imread(dir_LF, cv2.IMREAD_UNCHANGED)[:, :, 0:3]
+    LF_image = LF_image[:, :, ::-1]
+    LF_image = color.rgb2ycbcr(LF_image).astype(np.float32)
+
+    x, y, _ = LF_image.shape
+
+    lr_ycbcr = np.zeros((1, view_n_new, view_n_new, x // view_n_new, y // view_n_new, 3), dtype=np.float32)
+    for i in range(view_n_new):
+        for j in range(view_n_new):
+            lr_ycbcr[0, i, j] = LF_image[i::view_n_new, j::view_n_new]
+
+    hr_image = cv2.imread(dir_LF[:-4] + '_hr.png', cv2.IMREAD_UNCHANGED)[:, :, 0:3]
+    hr_image = hr_image[:, :, ::-1]
+    hr_image = color.rgb2ycbcr(hr_image).astype(np.float32)
+
+    lr_y = lr_ycbcr[..., 0]
+    _, U, V, lr_X, lr_Y = list(lr_y.shape)
+
+    lr_ycbcr_sheared = torch.from_numpy(lr_ycbcr.copy()).cuda().permute(0, 5, 1, 2, 3, 4).reshape(1, 3, -1, lr_X, lr_Y)
+    time_strat = time.time()
+    lr_ycbcr_sheared = warp_all(lr_ycbcr_sheared, disparity_list / scale, view_n_new,
+                                view_position=[view_n_new // 2, view_n_new // 2],
+                                align_corners=False)
+
+    lr_ycbcr_sheared = lr_ycbcr_sheared.reshape(3, D, U, V, lr_X, lr_Y).cpu().numpy()
+
+    return lr_ycbcr_sheared / 255.0, _, lr_ycbcr, hr_image / 255.0, time_strat

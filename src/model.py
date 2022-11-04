@@ -167,6 +167,58 @@ class AltFilter(nn.Module):
         return out
 
 
+class net2x(nn.Module):
+
+    def __init__(self, an, layer, channel=32):
+
+        super(net2x, self).__init__()
+
+        self.an = an
+        self.an2 = an * an
+        self.relu = nn.ReLU(inplace=True)
+
+        self.conv0 = nn.Conv2d(in_channels=1, out_channels=channel, kernel_size=3, stride=1, padding=1)
+
+        self.altblock1 = self.make_layer(layer_num=layer, channel=channel)
+        self.fup1 = nn.Sequential(
+            nn.ConvTranspose2d(in_channels=channel, out_channels=channel, kernel_size=4, stride=2, padding=1),
+            nn.ReLU(inplace=True),
+        )
+        self.res1 = nn.Conv2d(in_channels=channel, out_channels=1, kernel_size=3, stride=1, padding=1)
+        self.iup1 = nn.ConvTranspose2d(in_channels=1, out_channels=1, kernel_size=4, stride=2, padding=1)
+
+        for m in self.modules():
+            if isinstance(m, nn.ConvTranspose2d):
+                c1, c2, h, w = m.weight.data.size()
+                weight = get_upsample_filter(h)
+                m.weight.data = weight.view(1, 1, h, w).repeat(c1, c2, 1, 1)
+                if m.bias is not None:
+                    m.bias.data.zero_()
+
+    def make_layer(self, layer_num, channel):
+        layers = []
+        for i in range(layer_num):
+            layers.append(AltFilter(self.an, channel=channel))
+        return nn.Sequential(*layers)
+
+    def forward(self, lr):
+
+        N, _, _, h, w = lr.shape  # lr [N,81,h,w]
+        lr = lr.view(N * self.an2, 1, h, w)  # [N*81,1,h,w]
+
+        x = self.relu(self.conv0(lr))  # [N*81,64,h,w]
+        f_1 = self.altblock1(x)  # [N*81,64,h,w]
+        fup_1 = self.fup1(f_1)  # [N*81,64,2h,2w]
+        res_1 = self.res1(fup_1)  # [N*81,1,2h,2w]
+        iup_1 = self.iup1(lr)  # [N*81,1,2h,2w]
+
+        sr_2x = res_1 + iup_1  # [N*81,1,2h,2w]
+
+        sr_2x = sr_2x.view(N, self.an2, h * 2, w * 2)
+
+        return sr_2x
+
+
 class net4x(nn.Module):
 
     def __init__(self, an, layer, channel=32):
@@ -324,7 +376,9 @@ class LFHSR_mask(nn.Module):
                                                 channel=u_net_channel)
         self.fusion_part = mask_part(num_layers=fusion_num_layers, in_channels=2, channel=fusion_channel)
 
-        if scale == 4:
+        if scale == 2:
+            self.upsample = net2x(an=an, layer=up_num_layers, channel=up_channel)
+        elif scale == 4:
             self.upsample = net4x(an=an, layer=up_num_layers, channel=up_channel)
         elif scale == 8:
             self.upsample = net8x(an=an, layer=up_num_layers, channel=up_channel)
