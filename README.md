@@ -60,3 +60,33 @@ python train.py -S 8 -N 9 -dmin 4 -dmax 4 -dg 0.25 -l1 6 -l2 6 -l3 4 -l4 4 -b 2 
 ```
 
 Use `python train.py -h` to get more helps.
+
+## Citation
+If you find this work is helpful to you, please cite the following paper:
+```
+@inproceedings{DBLP:conf/mm/ChangL022,
+  author    = {Song Chang and
+               Youfang Lin and
+               Shuo Zhang},
+  editor    = {Jo{\~{a}}o Magalh{\~{a}}es and
+               Alberto Del Bimbo and
+               Shin'ichi Satoh and
+               Nicu Sebe and
+               Xavier Alameda{-}Pineda and
+               Qin Jin and
+               Vincent Oria and
+               Laura Toni},
+  title     = {Flexible Hybrid Lenses Light Field Super-Resolution using Layered
+               Refinement},
+  booktitle = {{MM} '22: The 30th {ACM} International Conference on Multimedia, Lisboa,
+               Portugal, October 10 - 14, 2022},
+  pages     = {5584--5592},
+  publisher = {{ACM}},
+  year      = {2022},
+  url       = {https://doi.org/10.1145/3503161.3548056},
+  doi       = {10.1145/3503161.3548056},
+  timestamp = {Fri, 14 Oct 2022 14:25:06 +0200},
+  biburl    = {https://dblp.org/rec/conf/mm/ChangL022.bib},
+  bibsource = {dblp computer science bibliography, https://dblp.org}
+}
+```
