@@ -193,5 +193,5 @@ if __name__ == '__main__':
         gpu_no=args.gpu_no,
     )
 
-    # -S 4 -N 9 -dmin 4 -dmax 4 -dg 0.25 -l1 6 -l2 6 -l3 6 -l4 3 -b 4 -crop 32 -lr 0.001 -step 1600 -g 0
-    # -S 8 -N 9 -dmin 4 -dmax 4 -dg 0.25 -l1 6 -l2 6 -l3 4 -l4 4 -b 2 -crop 24 -lr 0.0005 -step 1600 -g 0
+    # -S 4 -N 9 -dmin -4 -dmax 4 -dg 0.25 -l1 6 -l2 6 -l3 6 -l4 3 -b 4 -crop 32 -lr 0.001 -step 1600 -g 0
+    # -S 8 -N 9 -dmin -4 -dmax 4 -dg 0.25 -l1 6 -l2 6 -l3 4 -l4 4 -b 2 -crop 24 -lr 0.0005 -step 1600 -g 0
