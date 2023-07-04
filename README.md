@@ -50,13 +50,13 @@ Use `python test_for_real_world.py -h` to get more helps.
 For $\times 4$ task:
 
 ```bash
-python train.py -S 4 -N 9 -dmin 4 -dmax 4 -dg 0.25 -l1 6 -l2 6 -l3 6 -l4 3 -b 4 -crop 32 -lr 0.001 -step 1600 -g 0
+python train.py -S 4 -N 9 -dmin -4 -dmax 4 -dg 0.25 -l1 6 -l2 6 -l3 6 -l4 3 -b 4 -crop 32 -lr 0.001 -step 1600 -g 0
 ```
 
 For $\times 8$ task:
 
 ```bash
-python train.py -S 8 -N 9 -dmin 4 -dmax 4 -dg 0.25 -l1 6 -l2 6 -l3 4 -l4 4 -b 2 -crop 24 -lr 0.0005 -step 1600 -g 0
+python train.py -S 8 -N 9 -dmin -4 -dmax 4 -dg 0.25 -l1 6 -l2 6 -l3 4 -l4 4 -b 2 -crop 24 -lr 0.0005 -step 1600 -g 0
 ```
 
 Use `python train.py -h` to get more helps.
